@@ -65,8 +65,8 @@ program neural_network
     b_h = b_h - lr * sum(delta_h, 2) / n_samples
   
     if (mod(i, 10000) == 0) then 
-      print *, 'Error: ', sum(abs(out - y)) / (n_o * n_samples)
-      print *, 'Prediction: ', sum(abs(out))
+      !print *, 'Error: ', sum(abs(out - y)) / (n_o * n_samples) !The error
+      print *, 'Prediction: ', sum(abs(out)) !The inference
     end if 
   end do
 
