@@ -66,6 +66,7 @@ program neural_network
   
     if (mod(i, 10000) == 0) then 
       print *, 'Error: ', sum(abs(out - y)) / (n_o * n_samples)
+      print *, 'Prediction: ', sum(abs(out))
     end if 
   end do
 
