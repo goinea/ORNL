@@ -1,5 +1,12 @@
 program neural_network
-
+! Include extra entries for xl compiler to work, hopefully
+  #include <stdlib.h>
+  #include <stdio.h>
+  #include <math.h>
+  #define H5_USE_16_API 1
+  #include "hdf5.h"
+  #include "nuc_eos.h"
+! These were from genasis_code  
   use iso_fortran_env, only: int16, int32, real64
   
   implicit none
