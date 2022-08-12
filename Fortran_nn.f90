@@ -1,12 +1,5 @@
 program neural_network
-! Include extra entries for xl compiler to work, hopefully
-  #include <stdlib.h>
-  #include <stdio.h>
-  #include <math.h>
-  #define H5_USE_16_API 1
-  #include "hdf5.h"
-  #include "nuc_eos.h"
-! These were from genasis_code  
+
   use iso_fortran_env, only: int16, int32, real64
   
   implicit none
@@ -14,10 +7,10 @@ program neural_network
   integer(int32) :: i
   
   ! Neurons in each layer: input (i), hidden (h), output (o)
-  integer(int16), parameter :: n_i = 2, n_h = 5, n_o = 1
+  integer(int16), parameter :: n_i = 143, n_h = 5, n_o = 143
   
   ! Number of data samples
-  integer(int32), parameter :: n_samples = 4! changed from 4 to 5
+  integer(int32), parameter :: n_samples = 1
 
   ! learning rate
   real(real64), parameter :: lr = 1.0
@@ -36,20 +29,37 @@ program neural_network
 
   ! Inputs and targets
   real(real64) :: x(n_i, n_samples), y(n_o, n_samples)
+  real(real64), Dimension(143,1) :: a
+  real(real64), Dimension(143,1) :: b
+  real(real64), Dimension(143,1) :: c
   real(real64), Dimension(143,5) :: p
   real(real64), Dimension(143,1) :: q
+  real(real64), Dimension(143,1) :: density
+  real(real64), Dimension(143,1) :: gam
+  real(real64), Dimension(143,1) :: ep
+  real(real64), Dimension(143,1) :: k
   open(10,file='EOS_x_data.txt')
-  read(10,'(5f4.1)') p
+  read(10,'(BZ,5D8.0,BZ)') p ! 5f4.0 was working, D8.0 was working as well
   open(11,file='EOS_y_data.txt')
-  read(11,'(5f4.1)') q
-  x = reshape([p],shape(x))!reshape([0.,0., 0.,1., 1.,0., 1.,1.,1.5], shape(x))!added a "1.5" here
-  y = reshape([q], shape(y))!added a "1" here
-  
+  read(11,'(f4.0)') q !perfectly formatted here
+ !Creating the files for individual reads: Density,Gamma,E,K
+  open(13,file='Density.txt')
+  read(13,'(f4.0)') density
+  open(14,file='Gamma.txt')
+  read(14,'(f4.0)') gam
+  open(15,file='E.txt')
+  read(15,'(f4.0)') ep
+  open(16,file='k.txt')
+  read(16,'(f4.0)') k
+  x = reshape([gam],shape(x))!reshape([0.,0., 0.,1., 1.,0., 1.,1.], shape(x))
+  y = reshape([q], shape(y))!reshape([0., 1., 1., 0.], shape(y))
+  print *,'y',y
   ! Initialize weights and biases
   call random_number(wih)
   call random_number(b_h)
   call random_number(who)
   call random_number(b_o)
+  
   wih = wih - 0.5
   b_h = b_h - 0.5
   who = who - 0.5
@@ -71,9 +81,9 @@ program neural_network
     wih = wih - lr * matmul(delta_h, transpose(x)) / n_samples
     b_h = b_h - lr * sum(delta_h, 2) / n_samples
   
-    if (mod(i, 10000) == 0) then 
-      !print *, 'Error: ', sum(abs(out - y)) / (n_o * n_samples) !The error
-      print *, 'Prediction: ', sum(abs(out)) !The inference
+    if (mod(i, 100) == 0) then 
+      !print *, 'Error: ', sum(abs(out - y)) / (n_o * n_samples)
+      print *, "prediction",sum(abs(out-y))
     end if 
   end do
 
@@ -82,7 +92,7 @@ contains
   pure function sigmoid(x) result(res)
     real(real64), intent(in) :: x(:,:)
     real(real64) :: res(size(x, 1), size(x, 2))
-    res = 1. / (1. + exp(-x)) 
+    res = 1. / (1. + exp(-(x)))
   end function sigmoid
 
   pure function sigmoid_deriv(x) result(res)
@@ -94,7 +104,7 @@ contains
   pure function tanh_deriv(x) result(res) 
     real(real64), intent(in) :: x(:,:)
     real(real64) :: res(size(x, 1), size(x, 2))
-    res = 1. - x ** 2 
+    res = 1. - x ** 2
   end function tanh_deriv
 
   pure function lincomb(inp, weights, biases) result (res)
